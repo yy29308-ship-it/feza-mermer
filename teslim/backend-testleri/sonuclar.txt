@@ -1,0 +1,29 @@
+FEZA MERMER - BACKEND DOGRULAMA TESTLERI
+Tarih: 24.08.2026 23:32:47
+Hedef: http://localhost:3000/iletisim (Next.js Server Action)
+
+[GECTI] Bos form gonderimi
+   Beklenen : Sunucu zorunlu alanlar icin hata dondurmeli
+   Gozlenen : 6 hata mesaji: Lütfen işaretli alanları kontrol edin. | Lütfen adınızı yazın. | Telefon numarası eksik görünüyor.
+
+[GECTI] Gecersiz telefon / e-posta / kisa mesaj
+   Beklenen : Her alan icin ayri hata mesaji
+   Gozlenen : Lütfen işaretli alanları kontrol edin. | Telefon numarası eksik görünüyor. | Geçerli bir e-posta adresi yazın. | Lütfen bir konu seçin.
+
+[GECTI] Bot korumasi: gizli "bal kupu" alani dolu
+   Beklenen : Bota ipucu vermemek icin "basarili" gorunmeli, mail GITMEMELI
+   Gozlenen : form "Teşekkürler" ekranina gecti, mail gonderilmedi
+
+[GECTI] Bot korumasi: 3 saniyeden kisa surede gonderim
+   Beklenen : Bota ipucu vermemek icin "basarili" gorunmeli, mail GITMEMELI
+   Gozlenen : form "Teşekkürler" ekranina gecti, mail gonderilmedi
+
+[GECTI] Gecerli veri ile gonderim
+   Beklenen : Dogrulama gecmeli; sahte API anahtari yuzunden gonderim hatasi yakalanmali
+   Gozlenen : sunucu hatayi yakalayip kullaniciya alternatif sundu
+
+[GECTI] Veritabani erisilemezken form ayakta kaliyor
+   Beklenen : Form gorunmeli, gonderim akisi calismali, site cokmemeli
+   Gozlenen : form calisti ve sunucu yanit verdi (kayit atlandi, akis surdu)
+
+SONUC: 6/6 test gecti

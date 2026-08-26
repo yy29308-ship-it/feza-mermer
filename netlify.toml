@@ -1,0 +1,21 @@
+# =============================================================================
+#  NETLIFY YAPILANDIRMASI — Feza Mermer
+#
+#  Not: Sunucuda MySQL yoktur. İletişim formu otomatik olarak
+#  telefon/WhatsApp kartına düşer; site geri kalanıyla tam çalışır.
+#  Form çalışsın isterseniz Netlify panelinden RESEND_API_KEY ve
+#  CONTACT_TO_EMAIL ortam değişkenlerini tanımlayın.
+# =============================================================================
+
+[build]
+  command = "npm run build"
+  publish = ".next"
+
+[build.environment]
+  NODE_VERSION = "20"
+  # Prisma istemcisi Linux için yeniden üretilsin (yerelde Windows'a üretiliyor)
+  PRISMA_CLI_BINARY_TARGETS = "debian-openssl-3.0.x"
+
+# Next.js calisma zamani — Server Actions ve goruntu optimizasyonu icin gerekli
+[[plugins]]
+  package = "@netlify/plugin-nextjs"

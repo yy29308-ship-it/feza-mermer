@@ -1,0 +1,36 @@
+node_modules/
+.next/
+out/
+build/
+
+.env
+.env.local
+.env*.local
+
+npm-debug.log*
+yarn-error.log*
+
+.DS_Store
+Thumbs.db
+
+next-env.d.ts
+*.tsbuildinfo
+
+.vercel
+
+# WhatsApp ham foto arsivi — kaynak dosyalar, siteye dahil degil.
+# Secilenler public/images/projects/ altina kopyalandi.
+img/
+
+# Prisma tarafindan uretilen istemci
+/src/generated/
+
+# Tasinabilir MySQL (1.3 GB) — depoya gitmemeli
+.mysql-portable/
+
+# Local Netlify folder
+.netlify
+
+# Yerel editor ve arac ayarlari — kisisel, depoya girmemeli
+.claude/
+.mcp.json

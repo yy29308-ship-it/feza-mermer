@@ -1,0 +1,177 @@
+// =============================================================================
+//  FEZA MERMER — VERİTABANI ŞEMASI
+//
+//  Bu şema iki farklı işi görür:
+//
+//  1) TEKLİF TALEPLERİ  (ContactRequest)
+//     İletişim formundan gelen talepler. Bu tablonun tek kaynağı veritabanıdır.
+//     Amaç: mail gitmese bile talebin kaybolmaması.
+//
+//  2) KATALOG AYNASI    (Category, Stone, Project, Service, ...)
+//     Galeri ve hizmet verisinin kopyası. Kaynak hâlâ src/data/*.ts dosyaları;
+//     sayfalar oradan statik üretiliyor. Buradaki kopya raporlama ve sorgulama
+//     içindir, seed betiği ile doldurulur.
+//
+//  Şemayı değiştirdikten sonra:  npx prisma migrate dev --name <ad>
+// =============================================================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+/// Galeri kategorileri — src/data/projects.ts içindeki Category tipiyle aynı.
+model Category {
+  id        Int      @id @default(autoincrement())
+  /// 'mutfak', 'banyo', 'merdiven', 'duvar' — koddaki değerle birebir aynı olmalı.
+  slug      String   @unique @db.VarChar(32)
+  label     String   @db.VarChar(64)
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+
+  projects        Project[]
+  service         Service?
+  contactRequests ContactRequest[]
+
+  @@map("category")
+}
+
+/// Çalışılan taş çeşitleri (Carrara, Emperador, Limra ...).
+model Stone {
+  id          Int      @id @default(autoincrement())
+  name        String   @unique @db.VarChar(80)
+  /// Taşın çıkarıldığı yer — bilinmiyorsa boş.
+  origin      String?  @db.VarChar(120)
+  description String?  @db.Text
+  createdAt   DateTime @default(now())
+
+  projects Project[]
+  services ServiceStone[]
+
+  @@map("stone")
+}
+
+/// Galerideki tek bir iş.
+model Project {
+  id       Int     @id @default(autoincrement())
+  /// 'mutfak-01' gibi — koddaki Project.id ile aynı.
+  slug     String  @unique @db.VarChar(64)
+  title    String  @db.VarChar(160)
+  /// Görsel yolu, ör. /images/projects/mutfak-01.jpg
+  image    String  @db.VarChar(255)
+  /// Erişilebilirlik ve arama motoru için zorunlu.
+  alt      String  @db.Text
+  location String? @db.VarChar(120)
+  featured Boolean @default(false)
+
+  categoryId Int
+  category   Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  /// İşte kullanılan taş — girilmemişse boş.
+  stoneId Int?
+  stone   Stone? @relation(fields: [stoneId], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([categoryId])
+  @@index([stoneId])
+  @@index([featured])
+  @@map("project")
+}
+
+/// Hizmet açıklaması — kategori başına bir tane.
+model Service {
+  id      Int    @id @default(autoincrement())
+  title   String @db.VarChar(160)
+  /// Kartlarda görünen kısa cümle.
+  summary String @db.Text
+  /// Hizmet sayfasındaki uzun anlatım.
+  body    String @db.Text
+  image   String @db.VarChar(255)
+  alt     String @db.Text
+
+  /// 1:1 — her kategorinin en fazla bir hizmet açıklaması vardır.
+  categoryId Int      @unique
+  category   Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  includes ServiceInclude[]
+  stones   ServiceStone[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("service")
+}
+
+/// Hizmetin kapsamındaki maddeler ("Yerinde lazer ölçü ve şablon" gibi).
+model ServiceInclude {
+  id        Int    @id @default(autoincrement())
+  text      String @db.VarChar(255)
+  sortOrder Int    @default(0)
+
+  serviceId Int
+  service   Service @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+
+  @@index([serviceId])
+  @@map("service_include")
+}
+
+/// Hizmet ↔ taş çoka-çok bağı.
+/// Bir hizmette birden çok taş kullanılır, bir taş birden çok hizmette geçer.
+model ServiceStone {
+  serviceId Int
+  stoneId   Int
+
+  service Service @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  stone   Stone   @relation(fields: [stoneId], references: [id], onDelete: Cascade)
+
+  @@id([serviceId, stoneId])
+  @@index([stoneId])
+  @@map("service_stone")
+}
+
+/// Teklif talebinin işletme tarafındaki durumu.
+enum RequestStatus {
+  NEW       // Yeni geldi, henüz dönülmedi
+  CONTACTED // Müşteriyle iletişime geçildi
+  QUOTED    // Fiyat verildi
+  WON       // İş alındı
+  LOST      // İş alınamadı
+}
+
+/// İletişim formundan gelen teklif talebi.
+/// Bu tablonun tek kaynağı veritabanıdır — kodda karşılığı yoktur.
+model ContactRequest {
+  id      Int     @id @default(autoincrement())
+  name    String  @db.VarChar(80)
+  phone   String  @db.VarChar(20)
+  email   String? @db.VarChar(120)
+  message String  @db.Text
+
+  /// Formdaki konu seçimi. Kategori silinse bile talep kaybolmasın diye SetNull.
+  categoryId Int?
+  category   Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+
+  status RequestStatus @default(NEW)
+
+  /// E-posta bildirimi gerçekten gitti mi? Gitmediyse sebebi ne?
+  /// Bu iki alan sayesinde "mail gitmedi ama talep duruyor" durumu görülebilir.
+  emailSent  Boolean @default(false)
+  emailError String? @db.Text
+
+  /// İşletmenin kendi notu (arandı, ölçüye gidildi vb.).
+  note String? @db.Text
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status])
+  @@index([createdAt])
+  @@index([categoryId])
+  @@map("contact_request")
+}

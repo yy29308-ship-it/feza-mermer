@@ -1,0 +1,209 @@
+@import 'tailwindcss';
+@import 'tw-animate-css';
+
+@custom-variant dark (&:is(.dark *));
+
+/* ---------------------------------------------------------------------------
+   TASARIM SİSTEMİ
+   Sitenin bütün renkleri ve yazı tipleri burada tanımlı. Bir rengi burada
+   değiştirirseniz sitenin tamamında değişir — başka yere dokunmanıza gerek yok.
+
+   NOT: Bu blok shadcn bileşenlerinden ÖNCELİKLİDİR. Aşağıdaki
+   "@theme inline" bloğu shadcn'in kendi isimlerini tanımlar; oradaki
+   --color-accent ve --color-muted satırları bilerek silinmiştir, çünkü
+   buradaki taba rengini ve gri metin rengini eziyorlardı.
+   --------------------------------------------------------------------------- */
+@theme {
+  /* Renkler */
+  --color-bone: #faf8f5; /* sayfa zemini — kırık beyaz */
+  --color-surface: #ffffff; /* kartlar, header */
+  --color-ink: #1c1917; /* başlık ve ana metin */
+  --color-muted: #57534e; /* açıklama metni */
+  --color-line: #e7e2da; /* ince ayraç çizgileri */
+  --color-accent: #a0764f; /* butonlar, vurgu — taba/bronz */
+  --color-accent-dark: #805c3c; /* hover / focus */
+
+  /* Yazı tipleri (layout.tsx içinde yüklenir) */
+  --font-display: var(--font-playfair), Georgia, 'Times New Roman', serif;
+  --font-body: var(--font-inter), system-ui, -apple-system, sans-serif;
+
+  /* shadcn bileşenleri "font-sans" bekler — gövde yazı tipimize bağlıyoruz. */
+  --font-sans: var(--font-inter), system-ui, -apple-system, sans-serif;
+  --font-heading: var(--font-playfair), Georgia, 'Times New Roman', serif;
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+    /* Sabit header'ın anchor bağlantılarını kapatmaması için */
+    scroll-padding-top: 6rem;
+  }
+
+  body {
+    background-color: var(--color-bone);
+    color: var(--color-ink);
+    font-family: var(--font-body);
+    font-size: 1.0625rem;
+    line-height: 1.7;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-display);
+    font-weight: 400; /* zarafet ince ağırlıktan gelir, kalından değil */
+    letter-spacing: -0.02em;
+    line-height: 1.15;
+    text-wrap: balance;
+  }
+
+  h1 {
+    font-size: clamp(2.5rem, 6vw, 4.5rem);
+  }
+
+  h2 {
+    font-size: clamp(1.875rem, 3.5vw, 2.75rem);
+  }
+
+  h3 {
+    font-size: clamp(1.25rem, 2vw, 1.5rem);
+  }
+
+  /* Klavyeyle gezinenler için her yerde görünür odak halkası */
+  :focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 3px;
+    border-radius: 2px;
+  }
+
+  /* Uzun metin blokları asla okunmayacak kadar genişlemesin */
+  p {
+    text-wrap: pretty;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   Görünür alana girince yumuşak beliren bölümler.
+   IntersectionObserver "is-visible" sınıfını ekler (bkz. Reveal.tsx).
+   --------------------------------------------------------------------------- */
+@layer utilities {
+  .reveal {
+    opacity: 0;
+    transform: translateY(16px);
+    transition:
+      opacity 600ms ease-out,
+      transform 600ms ease-out;
+  }
+
+  .reveal.is-visible {
+    opacity: 1;
+    transform: none;
+  }
+
+  /* Sayfa açılır açılmaz görünen içerik (hero) için — beklemeden,
+     sırayla yukarı doğru belirir. Gecikmeyi inline style ile verin. */
+  @keyframes rise {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+
+  .animate-rise {
+    animation: rise 700ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+}
+
+/* Hareket hassasiyeti açık olan kullanıcılarda tüm animasyonları kapat */
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-delay: 0ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+
+  .reveal {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* ===========================================================================
+   SHADCN UYUMLULUK KATMANI
+   Dışarıdan eklenen bileşenler "bg-background", "text-muted-foreground",
+   "border-border" gibi isimler kullanır. Aşağıda bu isimleri YUKARIDAKİ
+   marka paletine bağlıyoruz — böylece dışarıdan eklenen her bileşen
+   otomatik olarak sitenin taba/kemik rengini alır, mor-gri shadcn
+   varsayılanıyla gelmez.
+
+   Bu bloğa elle renk yazmayın; renk değişikliği için yukarıdaki
+   @theme bloğunu düzenlemeniz yeterli.
+   =========================================================================== */
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+}
+
+:root {
+  --radius: 0.25rem; /* site keskin köşeli — shadcn'in 0.625rem'i yuvarlaktı */
+
+  --background: #faf8f5; /* bone */
+  --foreground: #1c1917; /* ink */
+  --card: #ffffff; /* surface */
+  --card-foreground: #1c1917;
+  --popover: #ffffff;
+  --popover-foreground: #1c1917;
+  --primary: #a0764f; /* accent — taba */
+  --primary-foreground: #ffffff;
+  --secondary: #f2ede6;
+  --secondary-foreground: #1c1917;
+  --muted-foreground: #57534e;
+  --accent-foreground: #805c3c;
+  --destructive: oklch(0.577 0.245 27.325);
+  --border: #e7e2da; /* line */
+  --input: #e7e2da;
+  --ring: #a0764f;
+
+  --sidebar: #ffffff;
+  --sidebar-foreground: #1c1917;
+  --sidebar-primary: #a0764f;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #f2ede6;
+  --sidebar-accent-foreground: #805c3c;
+  --sidebar-border: #e7e2da;
+  --sidebar-ring: #a0764f;
+}
